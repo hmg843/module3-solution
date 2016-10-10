@@ -1,30 +1,58 @@
 (function(){
   'ue strict';
 
-  angular.module('LunchCheck', [])
-         .controller('LunchCheckController', LunchCheckController);
+  angular.module('NarrowItDownApp', [])
+         .controller('NarrowItDownController', NarrowItDownController)
+         .service('MenuSearchService', MenuSearchService)
+         .constant('MenuBaseUrl', 'https://davids-restaurant.herokuapp.com/menu_items.json')
+         .directive('MenuItems', MenuItemsDirective);
 
-  LunchCheckController.$inject = ["$scope"];
-  function LunchCheckController($scope)
+  NarrowItDownController.$inject = ['MenuSearchService'];
+  function NarrowItDownController(MenuSearchService)
   {
-      $scope.lunchMenu = "";
-      $scope.lunchMenuCheckResult = "";
-      $scope.CheckLunchMenu = function() {
-        var numberOfItems = 0;
-        var lunchMenu = $scope.lunchMenu;
-        var lunchItems = lunchMenu.split(",");
-        for(i=0; i<lunchItems.length; i++) {
-          if(lunchItems[i].trim().length > 0) {
-            numberOfItems++;
+    var menu = this;
+    menu.searchTerm = "";
+    menu.findMenuItems = function() {
+      var promise = MenuSearchService.getMenuItems();
+      promise.then(function(response) {
+        menu.found = [];
+        if (menu.searchTerm === undefined ||
+            menu.searchTerm.length <= 0)
+          return;
+        var menuItems = response.data.menu_items;
+        for (var i = 0; i < menuItems.length; i++) {
+          var menuItem = menuItems[i];
+          var itemDescription = menuItem.description;
+          if (itemDescription.indexOf(menu.searchTerm) !== -1) {
+            menu.found.push(menuItem);
           }
         }
-        if(numberOfItems > 3) {
-          $scope.lunchMenuCheckResult = "Too Much!";
-        } else if(numberOfItems > 0) {
-          $scope.lunchMenuCheckResult = "Enjoy!";
-        } else {
-          $scope.lunchMenuCheckResult = "";
-        }
-      };
+        console.log(menu.found);
+      }).catch(function(error) {
+        console.log("error :" + error);
+      })
+    }
   };
+
+  function MenuItemsDirective()
+  {
+    var ddo = {
+      templateUrl : 'menu_items.html'
+    };
+    return ddo;
+  }
+
+  MenuSearchService.$inject = ['$http', 'MenuBaseUrl'];
+  function MenuSearchService($http, MenuBaseUrl)
+  {
+    var service = this;
+    service.getMenuItems = function()
+    {
+        var promise = $http({
+          method : 'GET',
+          url : MenuBaseUrl
+        });
+        return promise;
+    }
+  }
 })();
