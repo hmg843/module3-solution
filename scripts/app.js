@@ -5,7 +5,7 @@
          .controller('NarrowItDownController', NarrowItDownController)
          .service('MenuSearchService', MenuSearchService)
          .constant('MenuBaseUrl', 'https://davids-restaurant.herokuapp.com/menu_items.json')
-         .directive('MenuItems', MenuItemsDirective);
+         .directive('foundItems', FoundItemsDirective);
 
   NarrowItDownController.$inject = ['MenuSearchService'];
   function NarrowItDownController(MenuSearchService)
@@ -13,31 +13,27 @@
     var menu = this;
     menu.searchTerm = "";
     menu.findMenuItems = function() {
-      var promise = MenuSearchService.getMenuItems();
-      promise.then(function(response) {
+      if (menu.searchTerm === undefined || menu.searchTerm.length <= 0) {
         menu.found = [];
-        if (menu.searchTerm === undefined ||
-            menu.searchTerm.length <= 0)
-          return;
-        var menuItems = response.data.menu_items;
-        for (var i = 0; i < menuItems.length; i++) {
-          var menuItem = menuItems[i];
-          var itemDescription = menuItem.description;
-          if (itemDescription.indexOf(menu.searchTerm) !== -1) {
-            menu.found.push(menuItem);
-          }
-        }
-        console.log(menu.found);
-      }).catch(function(error) {
-        console.log("error :" + error);
-      })
+        return;
+      } else {
+        menu.found = MenuSearchService.getMatchedMenuItems(menu.searchTerm);
+      }
+    }
+    menu.removeItem = function(index) {
+      menu.found.splice(index, 1);
     }
   };
 
-  function MenuItemsDirective()
+  function FoundItemsDirective()
   {
     var ddo = {
-      templateUrl : 'menu_items.html'
+      restrict : 'E',
+      templateUrl : 'foundItems.html',
+      scope : {
+        foundItems : '<',
+        onRemove   : '&'
+      }
     };
     return ddo;
   }
@@ -46,13 +42,24 @@
   function MenuSearchService($http, MenuBaseUrl)
   {
     var service = this;
-    service.getMenuItems = function()
-    {
-        var promise = $http({
+    service.getMatchedMenuItems = function(searchTerm) {
+      var foundItems = [];
+      $http({
           method : 'GET',
           url : MenuBaseUrl
-        });
-        return promise;
+      }).then(function(response) {
+          var menuItems = response.data.menu_items;
+          for (var i = 0; i < menuItems.length; i++) {
+            var menuItem = menuItems[i];
+            var itemDescription = menuItem.description;
+            if (itemDescription.indexOf(searchTerm) !== -1) {
+              foundItems.push(menuItem);
+            }
+          }
+      }).catch(function(error) {
+          console.log("error :" + error);
+      });
+      return foundItems;
     }
   }
 })();
