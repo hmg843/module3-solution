@@ -1,7 +1,9 @@
-<h3 ng-show="foundItems.length > 0">Matched Menu Items</h3>
+<br>
+<br>
+<h3 class="row" ng-show="foundItems.length > 0">Matched Menu Items</h3>
 <ul>
   <li ng-repeat="item in foundItems">
-    {{item.description}}
-    <button ng-click="onRemove({index: $index});">Don't want this one!</button>
+    <span style="font-weight: bold">{{item.short_name}}, {{item.name}},</span>
+    <br>{{item.description}} <button ng-click="onRemove({index: $index});">Don't want this one!</button>
   </li>
 </ul>
