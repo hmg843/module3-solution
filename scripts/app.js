@@ -12,6 +12,9 @@
   {
     var menu = this;
     menu.searchTerm = "";
+    menu.searchResultsExist = function() {
+      return (menu.searchTerm.length > 0 && menu.found.length > 0);
+    }
     menu.findMenuItems = function() {
       if (menu.searchTerm === undefined || menu.searchTerm.length <= 0) {
         menu.found = [];
